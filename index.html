@@ -1,0 +1,1483 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>発音チャレンジ！| 湘南アイパーク研究</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --primary: #5856D6;
+            --primary-light: #f0f0ff;
+            --red: #FF3B30;
+            --orange: #FF9500;
+            --green: #34C759;
+            --blue: #007AFF;
+            --sub: #6e6e73;
+            --border: #d1d1d6;
+        }
+        body {
+            font-family: 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+            background: #f5f5f7;
+            color: #1d1d1f;
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+        }
+        .screen {
+            display: none;
+            width: 100%;
+            max-width: 480px;
+            min-height: 100vh;
+            background: white;
+            padding-bottom: 80px;
+            flex-direction: column;
+        }
+        .screen.active { display: flex; }
+
+        /* ─── ヘッダー ─── */
+        .hdr {
+            padding: 44px 24px 28px;
+        }
+        .hdr.purple { background: linear-gradient(135deg, #5856D6, #AF52DE); }
+        .hdr.green  { background: linear-gradient(135deg, #34C759, #007AFF); }
+        .hdr.purple h1, .hdr.purple p,
+        .hdr.green  h1, .hdr.green  p { color: white; }
+        .hdr.purple .badge { background: rgba(255,255,255,0.2); color: white; }
+        .hdr.green  .badge { background: rgba(255,255,255,0.2); color: white; }
+        .body { padding: 20px 24px 0; flex: 1; display: flex; flex-direction: column; }
+
+        /* ─── タイポ ─── */
+        h1 { font-size: 26px; font-weight: 800; margin: 8px 0 10px; line-height: 1.35; }
+        h2 { font-size: 20px; font-weight: 700; margin-bottom: 12px; line-height: 1.4; }
+        h3 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+        p  { font-size: 14px; line-height: 1.8; color: #3a3a3c; margin-bottom: 8px; }
+        .badge {
+            display: inline-block;
+            background: var(--primary-light);
+            color: var(--primary);
+            border-radius: 20px;
+            padding: 5px 14px;
+            font-size: 13px; font-weight: 700;
+            margin-bottom: 8px;
+        }
+        label { font-size: 14px; font-weight: 700; display: block; margin: 16px 0 4px; }
+        .hint { font-size: 12px; color: var(--sub); line-height: 1.6; margin-bottom: 2px; }
+
+        /* ─── ボタン ─── */
+        .btn {
+            display: block; width: 100%;
+            padding: 17px; border-radius: 16px; border: none;
+            font-size: 16px; font-weight: 700; cursor: pointer;
+            margin-top: 10px; transition: all 0.15s;
+            font-family: inherit;
+        }
+        .btn:active { transform: scale(0.97); opacity: 0.85; }
+        .btn-primary   { background: var(--primary); color: white; }
+        .btn-record    { background: var(--red); color: white; }
+        .btn-recording { background: var(--orange); color: white; }
+        .btn-secondary { background: #f2f2f7; color: #1d1d1f; }
+        .btn-green     { background: var(--green); color: white; }
+        .btn:disabled  { opacity: 0.3; cursor: not-allowed; transform: none !important; }
+
+        /* ─── 入力 ─── */
+        input[type="text"] {
+            width: 100%; padding: 15px 16px;
+            border: 2px solid var(--border); border-radius: 14px;
+            font-size: 22px; text-align: center; letter-spacing: 5px;
+            margin: 6px 0 4px; outline: none; font-family: inherit;
+            transition: border-color 0.2s;
+        }
+        input[type="text"]:focus { border-color: var(--primary); }
+
+        /* ─── カード類 ─── */
+        .info-box {
+            border-radius: 14px; padding: 13px 16px;
+            margin: 8px 0; font-size: 14px; line-height: 1.75;
+        }
+        .ib-yellow { background: #fff9e6; }
+        .ib-green  { background: #f0fff4; }
+        .ib-purple { background: #f5f0ff; }
+        .ib-blue   { background: #f0f8ff; }
+        .ib-red    { background: #fff0f0; }
+
+        .word-card {
+            background: linear-gradient(135deg, #f5f0ff, #e8f4ff);
+            border-radius: 20px; padding: 26px 20px;
+            text-align: center; margin: 14px 0;
+        }
+        .word-card .word { font-size: clamp(22px, 7vw, 38px); font-weight: 800; letter-spacing: 1px; color: var(--primary);
+                           word-break: break-word; }
+        .word-card .ipa  { font-size: 15px; color: var(--sub); margin-top: 8px; }
+
+        .symbol-box {
+            border: 2px dashed var(--border); border-radius: 18px;
+            overflow-x: auto; overflow-y: hidden;
+            margin: 12px 0; padding: 4px;
+            min-height: 120px;
+            background: #fafafa;
+            -webkit-overflow-scrolling: touch;
+        }
+        .symbol-box img {
+            max-width: 100%; height: auto;
+            display: block; margin: auto;
+        }
+        .thumb-img {
+            height: 56px; width: auto; border-radius: 6px;
+            border: 1px solid var(--border); flex-shrink: 0;
+            background: white;
+        }
+        .sym-ph { text-align: center; color: var(--sub); padding: 36px 20px; }
+        .sym-ph .ico { font-size: 52px; margin-bottom: 10px; }
+
+        /* ─── プログレス ─── */
+        .prog-wrap { display: flex; gap: 8px; margin-bottom: 10px; }
+        .prog-dot {
+            height: 6px; border-radius: 3px; flex: 1;
+            background: #e5e5ea; transition: all 0.35s;
+        }
+        .prog-dot.done   { background: var(--primary); }
+        .prog-dot.active { background: var(--primary); opacity: 0.45; }
+
+        /* ─── 録音ステータス ─── */
+        .rec-status {
+            text-align: center; padding: 10px 14px;
+            border-radius: 12px; margin: 8px 0;
+            font-size: 14px; font-weight: 600; display: none;
+        }
+        .rec-status.recording { background: #fff0f0; color: var(--red); }
+        .rec-status.done      { background: #f0fff4; color: var(--green); }
+
+        /* ─── 説明ボックス ─── */
+        .exp-box {
+            background: linear-gradient(135deg, #f5f0ff, #f0f8ff);
+            border-radius: 16px; padding: 18px; margin: 12px 0;
+        }
+        .timer {
+            font-size: 34px; font-weight: 800;
+            text-align: center; color: var(--primary); margin: 6px 0 10px;
+        }
+
+        /* ─── フローステップ ─── */
+        .flow-list { display: flex; flex-direction: column; gap: 10px; margin: 12px 0; }
+        .flow-item {
+            display: flex; align-items: flex-start; gap: 14px;
+            padding: 12px 14px; border-radius: 14px; background: #f9f9fb;
+        }
+        .flow-num {
+            width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+            background: var(--primary); color: white;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: 800; margin-top: 2px;
+        }
+        .flow-txt { font-size: 14px; line-height: 1.65; color: #3a3a3c; }
+        .flow-txt b { color: #1d1d1f; }
+
+        /* ─── グループ表示 ─── */
+        .group-tag {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: linear-gradient(135deg, #5856D6, #AF52DE);
+            color: white; border-radius: 14px;
+            padding: 10px 22px; font-size: 22px; font-weight: 800;
+            margin: 8px 0 14px;
+        }
+
+        /* ─── アンケート ─── */
+        .rank-list { display: flex; flex-direction: column; gap: 10px; margin: 12px 0; }
+        .rank-item {
+            display: flex; align-items: center; gap: 14px;
+            padding: 14px 16px; border: 2px solid var(--border);
+            border-radius: 14px; background: white; cursor: pointer;
+            user-select: none; transition: all 0.2s; overflow: hidden;
+        }
+        .rank-item.selected { border-color: var(--primary); background: var(--primary-light); }
+        .rank-badge {
+            width: 38px; height: 38px; border-radius: 50%;
+            background: #f2f2f7; display: flex;
+            align-items: center; justify-content: center;
+            font-weight: 800; font-size: 14px; flex-shrink: 0;
+        }
+        .rank-badge.filled { background: var(--primary); color: white; }
+        .rank-info { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+        .rank-info .rlabel { font-weight: 700; font-size: 15px; }
+        .rank-info .rword  { font-size: 12px; color: var(--sub); margin-top: 2px;
+                             white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        textarea {
+            width: 100%; padding: 13px 14px;
+            border: 2px solid var(--border); border-radius: 14px;
+            font-size: 14px; resize: none; height: 80px;
+            font-family: inherit; margin: 6px 0; line-height: 1.6;
+        }
+        textarea:focus { outline: none; border-color: var(--primary); }
+
+        /* ─── 完了画面 ─── */
+        .complete-icon { font-size: 80px; text-align: center; margin: 24px 0 10px; }
+        .nick-display {
+            background: linear-gradient(135deg, #5856D6, #AF52DE);
+            border-radius: 16px; padding: 18px; text-align: center;
+            font-size: 30px; font-weight: 800; letter-spacing: 6px;
+            color: white; margin: 12px 0;
+        }
+
+        /* ─── スピナー ─── */
+        .spinner {
+            width: 60px; height: 60px; margin: 0 auto 20px;
+            border: 5px solid #f0f0f0; border-top-color: var(--primary);
+            border-radius: 50%; animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ─── 単語バナー（シラブル色分け） ─── */
+        .word-banner {
+            text-align: center;
+            font-size: clamp(26px, 6.5vw, 40px);
+            font-weight: 800;
+            padding: 14px 16px;
+            background: linear-gradient(135deg, #f5f0ff, #e8f4ff);
+            border-radius: 16px;
+            margin: 8px 0 10px;
+            letter-spacing: 1px;
+            line-height: 1.4;
+        }
+        .word-syl { display: inline; }
+        .word-sep { color: #c0c0cc; margin: 0 2px; font-weight: 300; font-size: 0.75em; vertical-align: middle; }
+
+        /* ─── シラブル別記号グリッド ─── */
+        .syl-row {
+            display: flex;
+            gap: 6px;
+            margin: 6px 0 10px;
+            align-items: flex-start;
+        }
+        .syl-col {
+            flex: 1;
+            min-width: 0;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid var(--border);
+            background: white;
+        }
+        .syl-col img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* ─── フェーズバナー ─── */
+        .phase-banner {
+            border-radius: 14px;
+            padding: 11px 16px;
+            margin: 10px 0 8px;
+        }
+        .phase-banner-red   { background: #fff0f0; }
+        .phase-banner-green { background: #f0fff4; }
+        .phase-num  { font-size: 16px; font-weight: 800; margin-bottom: 2px; }
+        .phase-banner-red   .phase-num { color: var(--red); }
+        .phase-banner-green .phase-num { color: var(--green); }
+        .phase-desc { font-size: 13px; color: var(--sub); }
+
+        .divider { height: 1px; background: #f2f2f7; margin: 18px 0; }
+        .spacer  { flex: 1; min-height: 24px; }
+        .step-lbl { font-size: 13px; color: var(--sub); font-weight: 600; margin-bottom: 4px; }
+
+        .debug-bar {
+            background: var(--orange); color: white;
+            text-align: center; font-size: 12px; font-weight: 700; padding: 7px;
+        }
+
+        .survey-select {
+            width: 100%; padding: 13px 14px;
+            border: 2px solid var(--border); border-radius: 14px;
+            font-size: 14px; font-family: inherit;
+            background: white; cursor: pointer;
+            margin: 6px 0 4px; outline: none;
+            transition: border-color 0.2s;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236e6e73' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+        }
+        .survey-select:focus { border-color: var(--primary); }
+    </style>
+</head>
+<body>
+
+<!-- ============================
+     SCREEN 1：ようこそ
+============================= -->
+<div class="screen active" id="s-welcome">
+    <div class="hdr purple">
+        <div class="badge">実験とアンケートにご協力ください</div>
+        <h1>発音記号<br>チャレンジ！🚀</h1>
+        <p style="opacity:.9;">記号を見て発音するだけ！約7分で完了。あなたの参加が研究データになります🎉</p>
+    </div>
+    <div class="body">
+        <div class="info-box ib-yellow">
+            📊 <b>5月23日 湘南アイパーク発表会</b>で<br>
+            　  あなたのニックネームがスクリーンに表示されます✨
+        </div>
+        <div class="info-box ib-green">
+            🍫 完了後に<b>2年6組</b>に来ると<b>お菓子をプレゼント</b>
+        </div>
+        <p style="font-size:13px;color:var(--sub);margin:6px 0;">⏱ 所要時間：約7分　🤫 静かな場所で行ってください</p>
+
+        <div class="divider"></div>
+
+        <div class="info-box ib-purple" style="font-size:13px;">
+            🔒 <b>プライバシーについて</b><br>
+            録音データ・回答は<b>この実験研究のみ</b>に使用します。<br>
+            研究発表や論文では<b>個人が特定されない形で</b>データを使用します。<br>
+        </div>
+        <label style="display:flex;align-items:flex-start;gap:10px;margin:10px 0 4px;cursor:pointer;font-weight:normal;">
+            <input type="checkbox" id="consent-check" onchange="checkInput()"
+                   style="width:20px;height:20px;flex-shrink:0;margin-top:2px;accent-color:var(--primary);">
+            <span style="font-size:13px;line-height:1.6;">上記を確認し、研究目的での使用に同意します</span>
+        </label>
+
+        <div class="divider"></div>
+
+        <label for="pid-input">参加者番号（4桁の半角数字）</label>
+        <input type="text" id="pid-input" maxlength="4"
+               placeholder="例：2601" inputmode="numeric"
+               pattern="[0-9]{4}" oninput="checkInput()">
+        <p class="hint">学年・組・出席番号を半角数字で（例：2年6組1番 → <b>2601</b>）</p>
+        <div id="pid-warn" style="display:none;color:var(--red);font-size:13px;padding:4px 0;">
+            ⚠️ この番号はすでに送信済みです。もう一度参加しますか？
+        </div>
+
+        <label for="nick-input">ニックネーム（5文字以内）</label>
+        <input type="text" id="nick-input" maxlength="5"
+               placeholder="例：たろう" oninput="checkInput()">
+        <p class="hint">発表会のスクリーンに表示されます ✨</p>
+
+        <div class="spacer"></div>
+        <button class="btn btn-primary" id="btn-start"
+                onclick="startExperiment()" disabled>はじめよう →</button>
+    </div>
+</div>
+
+<!-- ============================
+     SCREEN 2：実験概要
+============================= -->
+<div class="screen" id="s-overview">
+    <div class="hdr green">
+        <div class="badge">📋 実験について</div>
+        <h1>何をするの？<br>なぜやるの？</h1>
+    </div>
+    <div class="body">
+        <p style="font-size:13px;color:var(--sub);">あなたのグループ</p>
+        <div class="group-tag" id="display-group">G?</div>
+
+        <p>英語の発音記号には IPA（国際音声記号）という種類がありますが、
+           日本語話者には難しいと言われています。<br>
+           この研究では<b>「もっとわかりやすい記号を作れるか？」</b>を調べています。</p>
+
+        <div class="divider"></div>
+        <h3>やること（全部で約7分！）</h3>
+
+        <div class="flow-list">
+            <div class="flow-item">
+                <div class="flow-num">1</div>
+                <div class="flow-txt"><b>英単語を発音する</b><br>記号を見て、声に出すだけ！</div>
+            </div>
+            <div class="flow-item">
+                <div class="flow-num">2</div>
+                <div class="flow-txt"><b>4種類の記号を比べる</b><br>それぞれ1単語ずつ、発音して比較</div>
+            </div>
+            <div class="flow-item">
+                <div class="flow-num">3</div>
+                <div class="flow-txt"><b>好きな記号で練習</b><br>お気に入りを選んでもう一度！</div>
+            </div>
+            <div class="flow-item" style="background:#f0fff4;">
+                <div class="flow-num" style="background:var(--green);">4</div>
+                <div class="flow-txt"><b>アンケートに答えて完了！🎉</b><br>どれが良かったか教えてね</div>
+            </div>
+        </div>
+
+        <div class="info-box ib-purple">
+            💡 うまく読めなくても<b>全く問題なし！</b>それもデータになります。
+        </div>
+
+        <div class="spacer"></div>
+        <button class="btn btn-green" onclick="showScreen('s-instructions')">内容を確認した → 次へ</button>
+    </div>
+</div>
+
+<!-- ============================
+     SCREEN 3：注意事項
+============================= -->
+<div class="screen" id="s-instructions">
+    <div class="hdr">
+        <div class="badge">🎙️ 録音について</div>
+        <h2>始める前に確認</h2>
+    </div>
+    <div class="body">
+        <div class="flow-list">
+            <div class="flow-item" style="background:#fff0f0;">
+                <div class="flow-num" style="background:var(--red);">🎤</div>
+                <div class="flow-txt">
+                    <b>録音ボタンをタップ → 発音 → もう一度タップで停止</b><br>
+                    停止するまで録音されています
+                </div>
+            </div>
+            <div class="flow-item">
+                <div class="flow-num">📖</div>
+                <div class="flow-txt">
+                    <b>記号の説明がテキストで表示されます</b><br>
+                    1分間、じっくり読んで理解してください
+                </div>
+            </div>
+            <div class="flow-item">
+                <div class="flow-num">🪞</div>
+                <div class="flow-txt">
+                    <b>鏡があると◎</b><br>
+                    唇・舌の形を鏡で確認しながら発音してみてください
+                </div>
+            </div>
+            <div class="flow-item">
+                <div class="flow-num">🤫</div>
+                <div class="flow-txt">
+                    <b>静かな場所で行ってください</b><br>
+                    録音の品質が上がります
+                </div>
+            </div>
+            <div class="flow-item" style="background:#f0fff4;">
+                <div class="flow-num" style="background:var(--green);">✓</div>
+                <div class="flow-txt">
+                    <b>発音できなくても大丈夫！</b><br>
+                    記号を見た反応・感想がデータになります
+                </div>
+            </div>
+        </div>
+        <div class="divider"></div>
+
+        <!-- マイクテスト -->
+        <h3>🎙️ まず録音できるか確認しよう</h3>
+        <p style="font-size:13px;color:var(--sub);">短く何か話して、自分の声が聞こえるか確認してください。</p>
+
+        <div id="test-rec-area">
+            <button class="btn btn-record" id="btn-test-rec" onclick="testRecord()">🎤 テスト録音する</button>
+            <button class="btn btn-secondary" id="btn-test-play"
+                    onclick="testPlay()" style="display:none;">▶ 再生して確認する</button>
+            <div id="test-status" style="display:none;font-size:14px;font-weight:700;
+                 color:var(--green);text-align:center;padding:10px 0;">
+                ✅ 録音OK！スタートできます
+            </div>
+        </div>
+
+        <div class="spacer"></div>
+        <button class="btn btn-primary" id="btn-to-baseline"
+                onclick="showScreen('s-baseline')">準備OK！ スタート 🚀</button>
+    </div>
+</div>
+
+<!-- ============================
+     SCREEN 4：ベースライン
+============================= -->
+<div class="screen" id="s-baseline">
+    <div class="hdr">
+        <div class="badge">ウォームアップ 🔥</div>
+        <h2>まず記号なしで<br>発音してみよう！</h2>
+        <p style="color:var(--sub);font-size:13px;">うまくなくてOK！まず挑戦してみよう</p>
+    </div>
+    <div class="body">
+        <div class="word-card">
+            <div class="word">Flocci</div>
+        </div>
+
+        <div id="rec-status-baseline" class="rec-status"></div>
+        <button class="btn btn-record" id="btn-rec-baseline"
+                onclick="toggleRecord('baseline')">🎤 録音スタート</button>
+
+        <div class="spacer"></div>
+        <button class="btn btn-secondary" id="btn-baseline-next"
+                onclick="startConditions()" disabled>次へ →</button>
+    </div>
+</div>
+
+<!-- ============================
+     SCREEN 5：各記号条件（動的）
+============================= -->
+<div class="screen" id="s-condition">
+    <div class="hdr" style="padding-bottom:12px;">
+        <div class="prog-wrap" id="prog-bar"></div>
+        <div class="step-lbl" id="cond-step-label"></div>
+        <h2 id="cond-title"></h2>
+    </div>
+    <div class="body" style="padding-top:12px;">
+
+        <!-- 単語バナー（シラブル色分け） -->
+        <div class="word-banner" id="word-banner"></div>
+
+        <!-- Symbol 2（まなみ版）：2段レイアウトのためラベルバー付き全体画像 -->
+        <div class="symbol-box" id="symbol-box" style="display:none;">
+            <div class="sym-ph">
+                <div class="ico">🖼️</div>
+                <p style="margin:0;font-size:13px;">記号画像（準備中）</p>
+            </div>
+        </div>
+
+        <!-- Symbol 1・3・4：シラブル別クロップ画像を横並び -->
+        <div class="syl-row" id="syl-row" style="display:none;"></div>
+
+        <!-- フェーズA: 説明前 -->
+        <div id="phase-before">
+            <div class="phase-banner phase-banner-red">
+                <div class="phase-num">① 初見チャレンジ</div>
+                <div class="phase-desc">記号を見て、直感で声に出してみよう</div>
+            </div>
+            <div id="rec-status-before" class="rec-status"></div>
+            <button class="btn btn-record" id="btn-rec-before"
+                    onclick="toggleRecord('before')">🎤 録音する</button>
+        </div>
+
+        <!-- フェーズB: 説明 -->
+        <div id="phase-explanation" style="display:none;">
+            <div class="divider"></div>
+            <div class="exp-box">
+                <h3 style="color:var(--primary);">記号の読み方（1分）</h3>
+                <div class="timer" id="exp-timer">1:00</div>
+                <div id="exp-text" style="font-size:14px;margin-top:10px;line-height:1.85;"></div>
+            </div>
+            <div class="info-box ib-yellow" style="font-size:13px;margin-top:6px;">
+                鏡で口の形を確認しながら、実際に声を出して練習してみてください。
+                喉に手を当てると声帯の振動が分かります。
+            </div>
+            <button class="btn btn-secondary" onclick="skipToAfter()"
+                    style="background:#f5f0ff;color:var(--primary);font-size:14px;">
+                ✓ 読んだ・練習した → 次へ
+            </button>
+        </div>
+
+        <!-- フェーズC: 説明後 -->
+        <div id="phase-after" style="display:none;">
+            <div class="phase-banner phase-banner-green">
+                <div class="phase-num">② 学習後に再チャレンジ！</div>
+                <div class="phase-desc">記号の意味を理解した今、発音はどう変わる？</div>
+            </div>
+            <div id="rec-status-after" class="rec-status"></div>
+            <button class="btn btn-record" id="btn-rec-after"
+                    onclick="toggleRecord('after')">🎤 録音する</button>
+        </div>
+
+        <div class="spacer"></div>
+        <button class="btn btn-primary" id="btn-cond-next"
+                onclick="nextCondition()" disabled>次へ →</button>
+    </div>
+</div>
+
+<!-- ============================
+     SCREEN 6：お気に入り記号選択
+============================= -->
+<div class="screen" id="s-practice-choice">
+    <div class="hdr purple">
+        <div class="badge">⭐ お気に入りを選ぼう</div>
+        <h2>4つの中で一番<br>わかりやすかった記号は？</h2>
+        <p style="opacity:.9;font-size:13px;">この記号を見ながら最後の練習をします</p>
+    </div>
+    <div class="body">
+        <p class="hint">Flocciの記号例を参考に選んでください</p>
+        <div class="rank-list" id="pref-list">
+            <div class="rank-item" id="pref-1" onclick="choosePrefSymbol(1)" style="gap:10px;">
+                <div class="rank-badge" id="pref-badge-1">①</div>
+                <img src="symbol_1_flocci.png" class="thumb-img" alt="記号①">
+                <div class="rank-info">
+                    <span class="rlabel">記号①</span>
+                </div>
+            </div>
+            <div class="rank-item" id="pref-2" onclick="choosePrefSymbol(2)" style="gap:10px;">
+                <div class="rank-badge" id="pref-badge-2">②</div>
+                <img src="symbol_2_flocci.png" class="thumb-img" alt="記号②">
+                <div class="rank-info">
+                    <span class="rlabel">記号②</span>
+                </div>
+            </div>
+            <div class="rank-item" id="pref-3" onclick="choosePrefSymbol(3)" style="gap:10px;">
+                <div class="rank-badge" id="pref-badge-3">③</div>
+                <img src="symbol_3_flocci.png" class="thumb-img" alt="記号③">
+                <div class="rank-info">
+                    <span class="rlabel">記号③</span>
+                </div>
+            </div>
+            <div class="rank-item" id="pref-4" onclick="choosePrefSymbol(4)" style="gap:10px;">
+                <div class="rank-badge" id="pref-badge-4">④</div>
+                <img src="symbol_4_flocci.png" class="thumb-img" alt="記号④">
+                <div class="rank-info">
+                    <span class="rlabel">記号④</span>
+                </div>
+            </div>
+        </div>
+        <div class="spacer"></div>
+        <button class="btn btn-primary" id="btn-go-practice"
+                onclick="startPractice()" disabled>この記号で練習する →</button>
+    </div>
+</div>
+
+<!-- ============================
+     SCREEN 7：お気に入り記号で練習
+============================= -->
+<div class="screen" id="s-practice">
+    <div class="hdr" style="background: linear-gradient(135deg, #FF9500, #FF3B30); padding: 44px 24px 28px;">
+        <div class="badge" style="background:rgba(255,255,255,0.25);color:white;">🏋️ 練習タイム</div>
+        <h1 style="color:white;">好きな記号を見ながら<br>Flocciを発音しよう！</h1>
+        <p style="color:rgba(255,255,255,0.9);font-size:13px;">記号を参考に何度でも練習OK！準備できたら録音しよう</p>
+    </div>
+    <div class="body">
+        <div class="symbol-box" id="practice-symbol-box">
+            <div class="sym-ph">
+                <div class="ico">🖼️</div>
+                <p style="margin:0;font-size:13px;">記号画像を読み込み中…</p>
+            </div>
+        </div>
+        <div class="word-card">
+            <div class="word">Flocci</div>
+        </div>
+        <div id="rec-status-practice" class="rec-status"></div>
+        <button class="btn btn-record" id="btn-rec-practice"
+                onclick="toggleRecord('practice')">🎤 録音する</button>
+        <div class="spacer"></div>
+        <button class="btn btn-primary" id="btn-practice-next"
+                onclick="showScreen('s-transfer')" disabled>転移テストへ →</button>
+    </div>
+</div>
+
+<!-- ============================
+     SCREEN 8：転移テスト
+============================= -->
+<div class="screen" id="s-transfer">
+    <div class="hdr">
+        <div class="badge">🏁 ラストの一問！</div>
+        <h2>記号なしで<br>もう一度発音してみて！</h2>
+    </div>
+    <div class="body">
+        <div class="word-card">
+            <div class="word">Flocci</div>
+        </div>
+
+        <div id="rec-status-transfer" class="rec-status"></div>
+        <button class="btn btn-record" id="btn-rec-transfer"
+                onclick="toggleRecord('transfer')">🎤 録音する</button>
+
+        <div class="spacer"></div>
+        <button class="btn btn-secondary" id="btn-transfer-next"
+                onclick="showScreen('s-survey')" disabled>アンケートへ →</button>
+    </div>
+</div>
+
+<!-- ============================
+     SCREEN 9：主観評価
+============================= -->
+<div class="screen" id="s-survey">
+    <div class="hdr">
+        <div class="badge">📝 アンケート</div>
+        <h2>4つの記号について<br>教えてください！</h2>
+    </div>
+    <div class="body">
+        <p>発音しやすかった順に<b>1〜4位</b>をつけてください</p>
+        <p class="hint">タップすると順位が付きます。同じところをもう一度タップすると以降がリセットされます。</p>
+
+        <div class="rank-list">
+            <div class="rank-item" onclick="tapRank(1)" id="ri-1" style="gap:10px;">
+                <div class="rank-badge" id="rb-1">①</div>
+                <img src="symbol_1_flocci.png" class="thumb-img" alt="記号①">
+                <div class="rank-info">
+                    <span class="rlabel">記号①</span>
+                    <span class="rword" id="rw-1"></span>
+                </div>
+            </div>
+            <div class="rank-item" onclick="tapRank(2)" id="ri-2" style="gap:10px;">
+                <div class="rank-badge" id="rb-2">②</div>
+                <img src="symbol_2_flocci.png" class="thumb-img" alt="記号②">
+                <div class="rank-info">
+                    <span class="rlabel">記号②</span>
+                    <span class="rword" id="rw-2"></span>
+                </div>
+            </div>
+            <div class="rank-item" onclick="tapRank(3)" id="ri-3" style="gap:10px;">
+                <div class="rank-badge" id="rb-3">③</div>
+                <img src="symbol_3_flocci.png" class="thumb-img" alt="記号③">
+                <div class="rank-info">
+                    <span class="rlabel">記号③</span>
+                    <span class="rword" id="rw-3"></span>
+                </div>
+            </div>
+            <div class="rank-item" onclick="tapRank(4)" id="ri-4" style="gap:10px;">
+                <div class="rank-badge" id="rb-4">④</div>
+                <img src="symbol_4_flocci.png" class="thumb-img" alt="記号④">
+                <div class="rank-info">
+                    <span class="rlabel">記号④</span>
+                    <span class="rword" id="rw-4"></span>
+                </div>
+            </div>
+        </div>
+
+        <label>一番わかりやすかった記号の、どこが良かった？</label>
+        <textarea id="survey-good"
+            placeholder="例：舌の位置がわかりやすかった、矢印で息のイメージができた…"></textarea>
+
+        <label>一番わかりにくかった記号の、どこがダメだった？</label>
+        <textarea id="survey-bad"
+            placeholder="例：記号が複雑すぎた、何を表しているかわからなかった…"></textarea>
+
+        <div class="divider"></div>
+        <h3>📚 あなたの英語学習について</h3>
+        <p class="hint">研究の分析に使います。答えやすいものを選んでください。</p>
+
+        <label for="survey-years">英語を勉強している期間は？</label>
+        <select id="survey-years" class="survey-select">
+            <option value="">-- 選んでください --</option>
+            <option value="1-3">1〜3年</option>
+            <option value="4-6">4〜6年</option>
+            <option value="7-9">7〜9年</option>
+            <option value="10+">10年以上</option>
+        </select>
+
+        <label for="survey-ipa">発音記号（IPA）を学んだことはある？</label>
+        <select id="survey-ipa" class="survey-select">
+            <option value="">-- 選んでください --</option>
+            <option value="none">ほとんどない</option>
+            <option value="little">少しある（単語帳で見た程度）</option>
+            <option value="some">ある程度知っている</option>
+            <option value="well">よく知っている</option>
+        </select>
+
+        <label for="survey-level">英語の得意度（自己評価）は？</label>
+        <select id="survey-level" class="survey-select">
+            <option value="">-- 選んでください --</option>
+            <option value="1">1 — 得意でない</option>
+            <option value="2">2</option>
+            <option value="3">3 — 普通</option>
+            <option value="4">4</option>
+            <option value="5">5 — かなり得意</option>
+        </select>
+
+        <div class="spacer"></div>
+        <button class="btn btn-green" id="btn-submit"
+                onclick="submitData()" disabled>送信して完了する ✓</button>
+    </div>
+</div>
+
+<!-- ============================
+     SCREEN 8：送信中
+============================= -->
+<div class="screen" id="s-uploading">
+    <div class="body" style="align-items:center;justify-content:center;text-align:center;padding-top:30vh;">
+        <div class="spinner"></div>
+        <h2>送信中…</h2>
+        <p>録音データをアップロードしています。<br>そのままお待ちください。</p>
+        <div id="upload-progress"
+             style="font-size:13px;color:var(--sub);margin-top:16px;line-height:2;"></div>
+    </div>
+</div>
+
+<!-- ============================
+     SCREEN 9：完了
+============================= -->
+<div class="screen" id="s-complete">
+    <div class="body" style="padding-top:28px;">
+        <div class="complete-icon">🎉</div>
+        <h1 style="text-align:center;">ありがとう！<br>完了しました！</h1>
+        <p style="text-align:center;">あなたのニックネーム：</p>
+        <div class="nick-display" id="disp-nick"></div>
+        <p style="text-align:center;font-size:13px;">5月23日 湘南アイパーク発表会で表示されます ✨</p>
+
+        <div class="divider"></div>
+
+        <div class="info-box ib-green">
+            🍫 <b>お菓子をプレゼント！</b><br>
+            <b>2年6組</b>に来て住吉に声をかけてね
+        </div>
+        <div class="info-box ib-blue">
+            ✅ 録音データは自動的に送信されました
+        </div>
+        <div class="info-box" style="background:#f9f9fb;font-size:13px;color:var(--sub);">
+            🎙️ <b>自分の発音を聞いてみたい人へ</b><br>
+            録音ファイルをダウンロードして保存しておくと、後で聞き返せます。
+        </div>
+        <button class="btn btn-secondary" onclick="downloadAll()">
+            🎙️ 自分の発音をダウンロード（任意）
+        </button>
+        <div class="spacer"></div>
+    </div>
+</div>
+
+
+<script>
+// ============================================================
+// ★ CONFIG（デプロイ後にGAS URLを書き換えてください）★
+// ============================================================
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzZHUpofBh_HpmDfCR4GfrlAK12vlKw-OOjgqDk2c4cGPz5sAEdSsiB5xlCkfviaJ0wwQ/exec';
+
+// 記号の説明テキスト（HTML形式・構音運動誘発型）
+const EXPLANATIONS = {
+    1: `<b style="color:var(--primary)">口の断面図の読み方</b><br><br>
+<b>赤い舌の形</b><br>
+盛り上がっている部分が舌の最も高い位置。前寄りなら舌先を歯茎に近づけ、後ろ寄りなら舌の奥を上げて発音する。平らなら舌はほぼ動かさない。<br><br>
+<b>ピンクの印（接触の種類）</b><br>
+● または ★ → 舌や唇を完全に閉じてから開放する。○ → 近づけるが隙間を残して息を通す。× → 触れない。<br><br>
+<b>水色の気流矢印</b><br>
+トゲのある矢印 → 一気に息を破裂させる。波線の矢印 → 隙間からゆっくりすり抜ける。N字型 → 鼻から息が出る鼻音。<br><br>
+<b>右下の電球</b><br>
+黄色（ON）→ のどに手を当てると震える有声音。灰色（OFF）→ 息だけで声帯は動かない。<br><br>
+実際に口を動かしながら、断面図と照らし合わせて確認してください。`,
+
+    2: `<b style="color:#FF9500">縦線の記号の読み方</b><br><br>
+<b>縦線と隙間の大きさ</b><br>
+左の縦線は唇・歯の位置。縦線の間の隙間が狭い → 口を閉じ気味にして発音。隙間が広い → 口を大きく開けて発音する。<br><br>
+<b>赤い部分（舌や唇の動き）</b><br>
+隙間なし → 完全に閉じてから一気に開放する。隙間あり → 近づけたまま息を通し続ける。上下矢印 → 一瞬ふさいで破裂させる。<br><br>
+<b>矢印（息の方向）</b><br>
+記号の内側向き → 口から息を出す。記号の上向き → 鼻から息が出る。<br><br>
+<b>右下のマーク</b><br>
+○ → のどを震わせる（声あり）。× → 息だけを出す（声なし）。のどに手を当てると違いが分かる。<br><br>
+縦線の幅を「口の開き具合」として意識しながら発音してみてください。`,
+
+    3: `<b style="color:#34C759">口の形をそのまま真似する記号</b><br><br>
+<b>丸い形（正面から見た口）</b><br>
+顔の輪郭のような丸い記号は、口を正面から見た絵。その形通りに唇を作って発音する。横に引けばイ系の音、丸くすぼめればウ系の音に近づく。<br><br>
+<b>半分の形（横から見た断面）</b><br>
+縦棒は歯の位置。縦棒の左側が舌の輪郭を表す。絵と同じ形になるよう舌を動かして発音する。<br><br>
+<b>矢印がある場合</b><br>
+矢印の方向に唇や舌を動かしながら発音する。上矢印なら舌を上げる、横矢印なら引く。<br><br>
+鏡を見ながら、絵に近い口の形になるまで試してみてください。`,
+
+    4: `<b style="color:#5856D6">IPA（国際音声記号）— 1文字＝1音</b><br><br>
+<b>母音</b><br>
+<span style="font-size:16px;font-weight:700">æ</span> — 口を大きく横に開けて「ア」。日本語の「エ」と「ア」の中間。<br>
+<span style="font-size:16px;font-weight:700">ɛ</span> — 口をやや開けて「エ」。<br>
+<span style="font-size:16px;font-weight:700">ɪ</span> — 口を横に引いて短く「イ」。<br>
+<span style="font-size:16px;font-weight:700">ə</span> — 力を抜いてあいまいに「ア」。強く読まない音節で使う。<br>
+<span style="font-size:16px;font-weight:700">ʌ</span> — 口を少し開けてはっきり「ア」。<br>
+<span style="font-size:16px;font-weight:700">ɑː</span> — 口を大きく開けて深い「アー」（長め）。<br><br>
+<b>子音</b><br>
+<span style="font-size:16px;font-weight:700">θ</span> — 舌先を上下の歯の間に軽く挟んで息を通す。<br>
+<span style="font-size:16px;font-weight:700">ʃ</span> — 舌を後ろに引き、口をすぼめて「シュ」。<br>
+<span style="font-size:16px;font-weight:700">ɹ</span> — 舌先を宙に浮かせる。舌はどこにも触れない。<br>
+<span style="font-size:16px;font-weight:700">z</span> — s に声帯の振動を加えた音。のどに手を当てると震える。`,
+};
+
+// ============================================================
+// 実験データ
+// ============================================================
+// IPA シラブル別テキスト（symbol_4 用）
+const IPA_SYLLABLES = {
+    Flocci:     ['/flɑːk/', '/saɪ/'],
+    Psithurism: ['/sɪ/', '/θər/', '/ɪzəm/'],
+    Ecdysiast:  ['/ɛk/', '/dɪzɪ/', '/æst/'],
+    Shibboleth: ['/ʃɪb/', '/ə/', '/ləθ/'],
+    Callithump: ['/kæl/', '/ɪ/', '/θʌmp/'],
+};
+
+// シラブル表示定義（色・テキスト）
+const SYLLABLE_DISPLAY = {
+    Psithurism: [{t:'Psi',  c:'#5856D6'}, {t:'thur', c:'#34C759'}, {t:'ism',   c:'#FF9500'}],
+    Ecdysiast:  [{t:'Ec',   c:'#5856D6'}, {t:'dy·si',c:'#34C759'}, {t:'ast',   c:'#FF9500'}],
+    Shibboleth: [{t:'Shib', c:'#5856D6'}, {t:'bo',   c:'#34C759'}, {t:'leth',  c:'#FF9500'}],
+    Callithump: [{t:'Cal',  c:'#5856D6'}, {t:'li',   c:'#34C759'}, {t:'thump', c:'#FF9500'}],
+    Flocci:     [{t:'Floc', c:'#5856D6'}, {t:'ci',   c:'#34C759'}],
+};
+
+function renderWordBanner(word) {
+    const parts = SYLLABLE_DISPLAY[word];
+    const el = document.getElementById('word-banner');
+    if (!parts) { el.textContent = word; return; }
+    el.innerHTML = parts.map((p, i) =>
+        (i > 0 ? '<span class="word-sep">·</span>' : '') +
+        `<span class="word-syl" style="color:${p.c}">${p.t}</span>`
+    ).join('');
+}
+
+// ─── ラテン方格 ───────────────────────────────────────────
+// 参加者番号を parseInt してから % 4 → 0=G1, 1=G2, 2=G3, 3=G4
+// 各行：[記号①の単語, 記号②の単語, 記号③の単語, 記号④の単語]
+//
+//  番号末尾4 or 8 or 12... → %4=0 → G1
+//  番号末尾1 or 5 or 9...  → %4=1 → G2
+//  番号末尾2 or 6 or 10... → %4=2 → G3
+//  番号末尾3 or 7 or 11... → %4=3 → G4
+//
+const LATIN_SQUARE = [
+    ['Psithurism', 'Ecdysiast',  'Shibboleth', 'Callithump'], // G1 (%4=0)
+    ['Ecdysiast',  'Shibboleth', 'Callithump',  'Psithurism'], // G2 (%4=1)
+    ['Shibboleth', 'Callithump', 'Psithurism',  'Ecdysiast' ], // G3 (%4=2)
+    ['Callithump', 'Psithurism', 'Ecdysiast',   'Shibboleth'], // G4 (%4=3)
+];
+const GROUP_NAMES = ['G1', 'G2', 'G3', 'G4'];
+
+// ============================================================
+// 状態
+// ============================================================
+const ST = {
+    nickname: '',
+    participantNum: '',
+    group: 0,           // 0〜3（ラテン方格のインデックス）
+    wordOrder: [],
+    condIdx: 0,
+    recordings: {},     // { baseline, before_0〜3, after_0〜3, practice, transfer }
+    mediaRecorder: null,
+    isRecording: false,
+    recKey: null,
+    timerRef: null,
+    prefSymbol: null,   // 練習で選んだ記号番号（1〜4）
+};
+let rankOrder = [];
+
+// マイクストリームを使い回すことで許可ダイアログを1回だけにする
+let sharedStream = null;
+async function getStream() {
+    if (sharedStream && sharedStream.active) return sharedStream;
+    sharedStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    return sharedStream;
+}
+function releaseStream() {
+    if (sharedStream) {
+        sharedStream.getTracks().forEach(t => t.stop());
+        sharedStream = null;
+    }
+}
+
+// デバッグモード（URL末尾 ?debug=1 で録音・送信スキップ）
+const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
+if (DEBUG) {
+    document.addEventListener('DOMContentLoaded', () => {
+        document.body.insertAdjacentHTML('afterbegin',
+            '<div class="debug-bar">🛠 デバッグモード（録音・タイマー・送信スキップ）</div>');
+        document.getElementById('btn-start').disabled = false;
+        document.getElementById('pid-input').placeholder = '9999';
+        document.getElementById('nick-input').placeholder = 'デバッグ';
+    });
+}
+
+// ============================================================
+// 画面遷移
+// ============================================================
+function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo(0, 0);
+}
+
+// ============================================================
+// SCREEN 1 ：入力バリデーション
+// ============================================================
+function checkInput() {
+    const pid  = document.getElementById('pid-input').value.trim();
+    const nick = document.getElementById('nick-input').value.trim();
+    const pidOk     = /^\d{4}$/.test(pid);
+    const nickOk    = nick.length > 0;
+    const consentEl = document.getElementById('consent-check');
+    const consentOk = consentEl ? consentEl.checked : true;
+
+    // 同一端末からの重複チェック
+    const used = JSON.parse(localStorage.getItem('exp_used_ids') || '[]');
+    document.getElementById('pid-warn').style.display =
+        (pidOk && used.includes(pid)) ? 'block' : 'none';
+
+    document.getElementById('btn-start').disabled = !(pidOk && nickOk && consentOk) && !DEBUG;
+}
+
+function startExperiment() {
+    const pid = document.getElementById('pid-input').value.trim() || '9999';
+    ST.nickname       = document.getElementById('nick-input').value.trim() || 'デバッグ';
+    ST.participantNum = pid;
+
+    // 使用済み番号として記録
+    const used = JSON.parse(localStorage.getItem('exp_used_ids') || '[]');
+    if (!used.includes(pid)) {
+        used.push(pid);
+        localStorage.setItem('exp_used_ids', JSON.stringify(used));
+    }
+
+    // ─── グループ決定（ラテン方格）───
+    // parseInt(pid) % 4 → 0=G1 / 1=G2 / 2=G3 / 3=G4
+    ST.group     = parseInt(pid) % 4;
+    ST.wordOrder = LATIN_SQUARE[ST.group];
+
+    // 概要画面にグループを表示
+    document.getElementById('display-group').textContent = GROUP_NAMES[ST.group];
+
+    // アンケート画面・練習選択画面に使用単語を表示
+    for (let i = 0; i < 4; i++) {
+        const rwEl   = document.getElementById(`rw-${i + 1}`);
+        const prefEl = document.getElementById(`pref-word-${i + 1}`);
+        if (rwEl)   rwEl.textContent   = `（${ST.wordOrder[i]}）`;
+        if (prefEl) prefEl.textContent = `（練習単語：Flocci）`;
+    }
+
+    showScreen('s-overview');
+}
+
+// ============================================================
+// マイクテスト（注意事項画面）
+// ============================================================
+
+// iOS/Android 対応：録音フォーマットを自動判別
+function getBestMimeType() {
+    const types = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', ''];
+    for (const t of types) {
+        if (t === '' || MediaRecorder.isTypeSupported(t)) return t;
+    }
+    return '';
+}
+const REC_MIME = getBestMimeType();
+
+let testBlob        = null;
+let testMR          = null;
+let testIsRecording = false;
+
+async function testRecord() {
+    // デバッグモード：即OKにする
+    if (DEBUG) {
+        document.getElementById('btn-test-play').style.display = 'block';
+        document.getElementById('test-status').style.display   = 'block';
+        return;
+    }
+    if (testIsRecording) {
+        testMR.stop();
+        return;
+    }
+    const btn = document.getElementById('btn-test-rec');
+    try {
+        const stream = await getStream();   // 共有ストリーム（許可は1回だけ）
+        const chunks = [];
+        testMR = new MediaRecorder(stream, REC_MIME ? { mimeType: REC_MIME } : {});
+        testMR.ondataavailable = e => chunks.push(e.data);
+        testMR.onstop = () => {
+            testBlob = new Blob(chunks, { type: REC_MIME || 'audio/webm' });
+            // ストリームはそのまま保持（次の録音で使い回す）
+            testIsRecording = false;
+            btn.textContent  = '🔄 録り直す';
+            btn.className    = 'btn btn-secondary';
+            document.getElementById('btn-test-play').style.display = 'block';
+        };
+        testMR.start();
+        testIsRecording  = true;
+        btn.textContent  = '⏹ 停止する';
+        btn.className    = 'btn btn-recording';
+        document.getElementById('btn-test-play').style.display = 'none';
+        document.getElementById('test-status').style.display   = 'none';
+    } catch {
+        alert('マイクのアクセスを許可してください。\nアドレスバー付近のアイコンから許可できます。');
+    }
+}
+
+function testPlay() {
+    if (!testBlob) return;
+    const url   = URL.createObjectURL(testBlob);
+    const audio = new Audio(url);
+    const btn   = document.getElementById('btn-test-play');
+    btn.textContent = '🔊 再生中…';
+    btn.disabled    = true;
+    let done = false;
+    const finish = () => {
+        if (done) return;
+        done = true;
+        URL.revokeObjectURL(url);
+        btn.textContent = '▶ もう一度再生';
+        btn.disabled    = false;
+        document.getElementById('test-status').style.display = 'block';
+    };
+    audio.onended  = finish;
+    audio.onerror  = finish;
+    audio.play().catch(finish);
+    // iOSでonendedが発火しない場合のフォールバック（duration判明後にタイマー）
+    audio.onloadedmetadata = () => {
+        if (audio.duration && isFinite(audio.duration)) {
+            setTimeout(finish, (audio.duration + 1.0) * 1000);
+        }
+    };
+    // durationが取れない場合の最終フォールバック（30秒）
+    setTimeout(finish, 30000);
+}
+
+// ============================================================
+// 録音
+// ============================================================
+async function toggleRecord(key) {
+    // デバッグ：録音スキップ
+    if (DEBUG) {
+        ST.recordings[key] = new Blob([], { type: REC_MIME || 'audio/webm' });
+        onRecDone(key);
+        return;
+    }
+    if (ST.isRecording && ST.recKey === key) {
+        ST.mediaRecorder.stop();
+        return;
+    }
+    try {
+        const stream = await getStream();   // 共有ストリーム（許可は最初の1回だけ）
+        const chunks = [];
+        ST.mediaRecorder = new MediaRecorder(stream, REC_MIME ? { mimeType: REC_MIME } : {});
+        ST.mediaRecorder.ondataavailable = e => chunks.push(e.data);
+        ST.mediaRecorder.onstop = () => {
+            ST.recordings[key] = new Blob(chunks, { type: REC_MIME || 'audio/webm' });
+            // ストリームは保持したまま（次の録音で使い回す）
+            onRecDone(key);
+        };
+        ST.mediaRecorder.start();
+        ST.isRecording = true;
+        ST.recKey = key;
+        onRecStart(key);
+    } catch {
+        alert('マイクのアクセスを許可してください。\nアドレスバー付近のアイコンから許可できます。');
+    }
+}
+
+const STATUS_IDS = {
+    baseline: 'rec-status-baseline',
+    before:   'rec-status-before',
+    after:    'rec-status-after',
+    practice: 'rec-status-practice',
+    transfer: 'rec-status-transfer',
+};
+const BTN_IDS = {
+    baseline: 'btn-rec-baseline',
+    before:   'btn-rec-before',
+    after:    'btn-rec-after',
+    practice: 'btn-rec-practice',
+    transfer: 'btn-rec-transfer',
+};
+
+function onRecStart(key) {
+    const s = document.getElementById(STATUS_IDS[key.split("_")[0]]);
+    const b = document.getElementById(BTN_IDS[key.split("_")[0]]);
+    if (s) { s.style.display = 'block'; s.className = 'rec-status recording'; s.textContent = '🔴 録音中… もう一度タップで停止'; }
+    if (b) { b.textContent = '⏹ 停止する'; b.className = 'btn btn-recording'; }
+}
+
+function onRecDone(key) {
+    ST.isRecording = false;
+    ST.recKey = null;
+    const s = document.getElementById(STATUS_IDS[key.split("_")[0]]);
+    const b = document.getElementById(BTN_IDS[key.split("_")[0]]);
+    if (s) { s.style.display = 'block'; s.className = 'rec-status done'; s.textContent = '✅ 録音完了！'; }
+    if (b) { b.textContent = '🔄 録り直す'; b.className = 'btn btn-secondary'; }
+
+    if (key === 'baseline') document.getElementById('btn-baseline-next').disabled = false;
+    if (key.startsWith('before'))   startExplanation();
+    if (key.startsWith('after'))    document.getElementById('btn-cond-next').disabled = false;
+    if (key === 'practice') document.getElementById('btn-practice-next').disabled = false;
+    if (key === 'transfer') document.getElementById('btn-transfer-next').disabled = false;
+}
+
+// ============================================================
+// 条件画面
+// ============================================================
+function startConditions() {
+    ST.condIdx = 0;
+    renderCondition();
+}
+
+function renderCondition() {
+    const idx  = ST.condIdx;
+    const word = ST.wordOrder[idx];
+    const symN = idx + 1;
+    const SYM  = ['①', '②', '③', '④'];
+
+    // プログレスバー
+    document.getElementById('prog-bar').innerHTML =
+        [0, 1, 2, 3].map(i =>
+            `<div class="prog-dot ${i < idx ? 'done' : i === idx ? 'active' : ''}"></div>`
+        ).join('');
+
+    document.getElementById('cond-step-label').textContent = `記号 ${SYM[idx]}　${idx + 1} / 4`;
+    document.getElementById('cond-title').textContent = 'この記号を見て発音してみよう！';
+
+    // 単語バナー（シラブル色分け）
+    renderWordBanner(word);
+
+    // ─── 記号画像表示 ───
+    const sylRow = document.getElementById('syl-row');
+    const symBox = document.getElementById('symbol-box');
+    const parts  = SYLLABLE_DISPLAY[word] || [];
+
+    symBox.style.display = 'none';
+    sylRow.innerHTML = '';
+
+    if (symN === 2) {
+        // まなみ版：2段レイアウトのためラベルバー付き全体画像
+        symBox.style.display = 'block';
+        sylRow.style.display = 'none';
+        const src = `symbol_2_${word.toLowerCase()}_labeled.png`;
+        const img = new Image();
+        img.onload  = () => { symBox.innerHTML = `<img src="${src}" alt="記号②" style="max-width:100%;height:auto;display:block;">`; };
+        img.onerror = () => { symBox.innerHTML = '<div class="sym-ph"><div class="ico">🖼️</div><p style="margin:0;font-size:13px;">記号②（準備中）</p></div>'; };
+        img.src = src;
+
+    } else if (symN === 4) {
+        // IPA：テキストをシラブル別カードで表示（画像不使用）
+        sylRow.style.display = 'flex';
+        sylRow.style.flexDirection = 'row';
+        const ipaParts = IPA_SYLLABLES[word] || [];
+        parts.forEach((p, i) => {
+            const col = document.createElement('div');
+            col.className = 'syl-col';
+            col.style.cssText = 'display:flex;flex-direction:column;min-height:120px;';
+            col.innerHTML = `
+                <div style="flex:1;display:flex;align-items:center;justify-content:center;
+                     padding:12px 6px;font-size:clamp(18px,4vw,26px);font-weight:700;
+                     font-family:'Noto Sans','DejaVu Sans','Segoe UI',Arial,sans-serif;
+                     color:#1d1d1f;text-align:center;letter-spacing:1px;">
+                    ${ipaParts[i] || ''}
+                </div>
+                <div style="background:${p.c};color:white;font-weight:700;font-size:13px;
+                     text-align:center;padding:7px 4px;border-radius:0 0 10px 10px;">
+                    ${p.t}
+                </div>`;
+            sylRow.appendChild(col);
+        });
+
+    } else if (symN === 1) {
+        // 住吉版：縦並び（1シラブルずつ積み重ね）
+        sylRow.style.display = 'flex';
+        sylRow.style.flexDirection = 'column';
+        for (let s = 1; s <= parts.length; s++) {
+            const src = `symbol_1_${word.toLowerCase()}_syl${s}.png`;
+            const col = document.createElement('div');
+            col.className = 'syl-col';
+            col.style.width = '100%';
+            const img = document.createElement('img');
+            img.alt = `syl${s}`;
+            img.onerror = () => { col.innerHTML = '<div style="padding:16px;text-align:center;font-size:11px;color:#999">準備中</div>'; };
+            img.src = src;
+            col.appendChild(img);
+            sylRow.appendChild(col);
+        }
+
+    } else {
+        // Symbol 3：シラブル別クロップ画像を横並び
+        // 単語・記号ごとにセクション数を上書きするオーバーライド
+        const SECTION_OVERRIDE = {
+            '3_Callithump': [{t:'cal·li', c:'#5856D6'}, {t:'thump', c:'#FF9500'}],
+        };
+        const effectiveParts = SECTION_OVERRIDE[`${symN}_${word}`] || parts;
+        sylRow.style.display = 'flex';
+        sylRow.style.flexDirection = 'row';
+        for (let s = 1; s <= effectiveParts.length; s++) {
+            const src = `symbol_${symN}_${word.toLowerCase()}_syl${s}.png`;
+            const col = document.createElement('div');
+            col.className = 'syl-col';
+            const img = document.createElement('img');
+            img.alt = `syl${s}`;
+            img.onerror = () => { col.innerHTML = '<div style="padding:16px;text-align:center;font-size:11px;color:#999">準備中</div>'; };
+            img.src = src;
+            col.appendChild(img);
+            sylRow.appendChild(col);
+        }
+    }
+
+    // フェーズリセット
+    document.getElementById('phase-before').style.display      = 'block';
+    document.getElementById('phase-explanation').style.display = 'none';
+    document.getElementById('phase-after').style.display       = 'none';
+    document.getElementById('btn-cond-next').disabled = true;
+
+    ['rec-status-before', 'rec-status-after'].forEach(id => {
+        document.getElementById(id).style.display = 'none';
+    });
+    document.getElementById('btn-rec-before').textContent = '🎤 録音する（説明前）';
+    document.getElementById('btn-rec-before').className   = 'btn btn-record';
+    document.getElementById('btn-rec-after').textContent  = '🎤 録音する（説明後）';
+    document.getElementById('btn-rec-after').className    = 'btn btn-record';
+    document.getElementById('btn-cond-next').textContent  =
+        idx < 3 ? '次の記号へ →' : '好きな記号を選んで練習へ →';
+
+    // 録音ボタンのキーを単語ごとに設定（例: before_Flocci, after_Flocci）
+    document.getElementById('btn-rec-before').onclick = () => toggleRecord('before_' + word);
+    document.getElementById('btn-rec-after').onclick  = () => toggleRecord('after_'  + word);
+
+    showScreen('s-condition');
+}
+
+// ─── テキスト説明（2分タイマー付き） ──────────────────────
+function startExplanation() {
+    const symN = ST.condIdx + 1;
+
+    document.getElementById('phase-explanation').style.display = 'block';
+    document.getElementById('exp-text').innerHTML =
+        EXPLANATIONS[symN] || '（説明テキストが設定されていません）';
+
+    // デバッグ：即スキップ
+    if (DEBUG) { skipToAfter(); return; }
+
+    // 1分タイマー（読んで練習する時間）
+    let sec = 60;
+    const timerEl = document.getElementById('exp-timer');
+    if (ST.timerRef) clearInterval(ST.timerRef);
+    ST.timerRef = setInterval(() => {
+        sec--;
+        const m = Math.floor(sec / 60), s = sec % 60;
+        timerEl.textContent = `${m}:${s.toString().padStart(2, '0')}`;
+        if (sec <= 0) { clearInterval(ST.timerRef); timerEl.textContent = '✓ 完了'; skipToAfter(); }
+    }, 1000);
+}
+
+function skipToAfter() {
+    if (ST.timerRef) clearInterval(ST.timerRef);
+    document.getElementById('phase-after').style.display = 'block';
+}
+
+function nextCondition() {
+    if (ST.timerRef) clearInterval(ST.timerRef);
+    ST.condIdx++;
+    if (ST.condIdx < 4) renderCondition();
+    else                showScreen('s-practice-choice');
+}
+
+// ============================================================
+// お気に入り記号選択 → 練習
+// ============================================================
+function choosePrefSymbol(n) {
+    ST.prefSymbol = n;
+    // UI: ハイライト
+    [1, 2, 3, 4].forEach(i => {
+        const item  = document.getElementById(`pref-${i}`);
+        const badge = document.getElementById(`pref-badge-${i}`);
+        const SYM   = ['①', '②', '③', '④'];
+        if (i === n) {
+            item.className  = 'rank-item selected';
+            badge.className = 'rank-badge filled';
+            badge.textContent = '✓ これ！';
+        } else {
+            item.className  = 'rank-item';
+            badge.className = 'rank-badge';
+            badge.textContent = SYM[i - 1];
+        }
+    });
+    document.getElementById('btn-go-practice').disabled = false;
+}
+
+function startPractice() {
+    const n   = ST.prefSymbol;
+    const src = `symbol_${n}_flocci.png`;
+    const box = document.getElementById('practice-symbol-box');
+    const img = new Image();
+    img.onload  = () => { box.innerHTML = `<img src="${src}" alt="記号${n}">`; };
+    img.onerror = () => {
+        box.innerHTML = `<div class="sym-ph">
+            <div class="ico">🖼️</div>
+            <p style="margin:0;font-size:13px;">記号${n}（画像準備中）</p>
+        </div>`;
+    };
+    img.src = src;
+    // 録音ボタンをリセット
+    document.getElementById('rec-status-practice').style.display = 'none';
+    document.getElementById('btn-rec-practice').textContent = '🎤 録音する';
+    document.getElementById('btn-rec-practice').className   = 'btn btn-record';
+    document.getElementById('btn-practice-next').disabled = true;
+    showScreen('s-practice');
+}
+
+// ============================================================
+// 主観評価
+// ============================================================
+function tapRank(num) {
+    const pos = rankOrder.indexOf(num);
+    if (pos >= 0) rankOrder = rankOrder.slice(0, pos);
+    else if (rankOrder.length < 4) rankOrder.push(num);
+    updateRankUI();
+}
+
+function updateRankUI() {
+    const SYM = ['①', '②', '③', '④'];
+    [1, 2, 3, 4].forEach(num => {
+        const pos   = rankOrder.indexOf(num);
+        const badge = document.getElementById(`rb-${num}`);
+        const item  = document.getElementById(`ri-${num}`);
+        if (pos >= 0) {
+            badge.textContent = `${pos + 1}位`;
+            badge.className   = 'rank-badge filled';
+            item.className    = 'rank-item selected';
+        } else {
+            badge.textContent = SYM[num - 1];
+            badge.className   = 'rank-badge';
+            item.className    = 'rank-item';
+        }
+    });
+    document.getElementById('btn-submit').disabled = rankOrder.length < 4;
+}
+
+// ============================================================
+// データ送信
+// ============================================================
+async function submitData() {
+    // デバッグ：送信スキップ
+    if (DEBUG) {
+        document.getElementById('disp-nick').textContent = ST.nickname;
+        showScreen('s-complete');
+        return;
+    }
+
+    showScreen('s-uploading');
+    const prog = document.getElementById('upload-progress');
+
+    // 録音を base64 に変換
+    const audioData = {};
+    const keys = Object.keys(ST.recordings);
+    for (let i = 0; i < keys.length; i++) {
+        prog.textContent = `録音ファイルを準備中… ${i + 1} / ${keys.length}`;
+        audioData[keys[i]] = await blobToBase64(ST.recordings[keys[i]]);
+    }
+
+    const payload = {
+        timestamp:    new Date().toISOString(),
+        nickname:     ST.nickname,
+        number:       ST.participantNum,
+        group:        GROUP_NAMES[ST.group],   // "G1"〜"G4" をそのまま送信
+        wordOrder:    ST.wordOrder.join(','),
+        ranking:      rankOrder.join(','),
+        prefSymbol:   ST.prefSymbol || '',     // 練習で選んだ記号（1〜4）
+        good:         document.getElementById('survey-good').value,
+        bad:          document.getElementById('survey-bad').value,
+        engYears:     document.getElementById('survey-years').value,
+        engIPA:       document.getElementById('survey-ipa').value,
+        engLevel:     document.getElementById('survey-level').value,
+        audioData:    audioData,
+    };
+
+    prog.textContent = 'サーバーへ送信中…';
+    try {
+        await fetch(GAS_URL, {
+            method:  'POST',
+            mode:    'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify(payload),
+        });
+    } catch (e) {
+        console.warn('GAS送信エラー（録音はダウンロードで保存を）', e);
+    }
+
+    document.getElementById('disp-nick').textContent = ST.nickname;
+    releaseStream();   // マイクを解放
+    showScreen('s-complete');
+}
+
+function blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload  = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
+}
+
+// ============================================================
+// バックアップダウンロード
+// ============================================================
+function downloadAll() {
+    const keys = Object.keys(ST.recordings);
+    if (!keys.length) { alert('録音データがありません。'); return; }
+    keys.forEach(key => {
+        const url = URL.createObjectURL(ST.recordings[key]);
+        const a   = document.createElement('a');
+        a.href     = url;
+        a.download = `p${ST.participantNum}_${key}.webm`;
+        a.click();
+        URL.revokeObjectURL(url);
+    });
+}
+</script>
+</body>
+</html>
